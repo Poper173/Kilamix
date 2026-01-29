@@ -1,4 +1,5 @@
 package com.itech.kilamix.model
+
 data class RegisterRequest(
     val name: String,
     val email: String,

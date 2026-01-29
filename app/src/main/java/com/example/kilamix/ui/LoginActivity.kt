@@ -2,12 +2,9 @@ package com.itech.kilamix.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.itechtube.R
-
+import com.itech.kilamix.R
 import com.itech.kilamix.api.ApiClient
 import com.itech.kilamix.api.ApiService
 import com.itech.kilamix.model.AuthResponse
@@ -26,9 +23,14 @@ class LoginActivity : AppCompatActivity() {
         val email = findViewById<EditText>(R.id.email)
         val password = findViewById<EditText>(R.id.password)
         val btnLogin = findViewById<Button>(R.id.btnLogin)
+        val tvRegister = findViewById<TextView>(R.id.tvRegister)
 
         val api = ApiClient.retrofit.create(ApiService::class.java)
         val session = SessionManager(this)
+
+        tvRegister.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
+        }
 
         btnLogin.setOnClickListener {
 
@@ -48,13 +50,9 @@ class LoginActivity : AppCompatActivity() {
                         val data = response.body()!!.data
                         session.saveAuth(data.token, data.user.role)
 
-                        when (data.user.role) {
-                            "user" -> startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
-                            "creator" -> startActivity(Intent(this@LoginActivity, CreatorActivity::class.java))
-                            "admin" -> startActivity(Intent(this@LoginActivity, AdminActivity::class.java))
-                        }
-
+                        startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
                         finish()
+
                     } else {
                         Toast.makeText(this@LoginActivity, "Login failed", Toast.LENGTH_LONG).show()
                     }
