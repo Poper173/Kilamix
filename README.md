@@ -734,52 +734,6 @@ Response:
 
 ---
 
-## Flutter Integration Example
-
-### Dio HTTP Client
-```dart
-import 'package:dio/dio.dart';
-
-final dio = Dio(BaseOptions(
-  baseUrl: 'http://127.0.0.1:8000/api',
-  connectTimeout: Duration(seconds: 30),
-));
-
-// Add auth interceptor
-dio.interceptors.add(InterceptorsWrapper(
-  onRequest: (options, handler) {
-    final token = await getToken();
-    if (token != null) {
-      options.headers['Authorization'] = 'Bearer $token';
-    }
-    options.headers['Accept'] = 'application/json';
-    return handler.next(options);
-  },
-));
-
-// Login
-final response = await dio.post('/login', data: {
-  'email': 'email@example.com',
-  'password': 'password123',
-});
-
-// Get videos
-final response = await dio.get('/videos');
-```
-
-### Video Streaming
-```dart
-import 'package:video_player/video_player.dart';
-
-VideoPlayerController _controller = VideoPlayerController.networkUrl(
-  Uri.parse('http://127.0.0.1:8000/api/videos/1/stream'),
-);
-
-await _controller.initialize();
-await _controller.play();
-```
-
----
 
 *Last Updated: 2026-02-10*
 *Backend: Laravel 11 with Sanctum Authentication*
