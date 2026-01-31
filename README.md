@@ -2,7 +2,7 @@ Consuming this API endpoints continue naking an app
 
 
 
-# iTechTube API Documentation
+# kilaflix API Documentation
 php artisan serve --host=0.0.0.0 --port=8000
 
 ## Base URL
