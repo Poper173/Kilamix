@@ -15,8 +15,6 @@ class VideoAdapter(
     private val videos: List<Video>,
     private val onLike: (Video) -> Unit,
     private val onShare: (Video) -> Unit,
-    private val onDownload: (Video) -> Unit,
-    private val onPlay: (Video) -> Unit
 ) : RecyclerView.Adapter<VideoAdapter.VideoViewHolder>() {
 
     inner class VideoViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -41,12 +39,10 @@ class VideoAdapter(
         holder.creator.text = video.user.name
 
         Glide.with(holder.itemView.context)
-            .load(video.thumbnail_url?.replace("localhost", "10.0.2.2"))
             .placeholder(R.drawable.ic_launcher_background)
             .into(holder.thumbnail)
 
         holder.itemView.setOnClickListener {
-            onPlay(video)
         }
 
         holder.btnLike.setOnClickListener { onLike(video) }

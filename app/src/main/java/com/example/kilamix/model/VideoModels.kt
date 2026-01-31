@@ -1,7 +1,6 @@
 package com.itech.kilamix.model
 
 data class VideoResponse(
-    val message: String,
     val data: List<Video>
 )
 
@@ -21,4 +20,3 @@ data class Creator(
     val name: String,
     val avatar: String?
 )
-
