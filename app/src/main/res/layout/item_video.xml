@@ -1,62 +1,138 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="8dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="?android:attr/selectableItemBackground">
 
-    <!-- Thumbnail -->
-    <ImageView
-        android:id="@+id/imgThumbnail"
+    <!-- Thumbnail with duration badge -->
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:scaleType="centerCrop" />
+        android:layout_height="200dp">
+
+        <ImageView
+            android:id="@+id/imgThumbnail"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+        <TextView
+            android:id="@+id/txtDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="8dp"
+            android:background="#80000000"
+            android:paddingHorizontal="6dp"
+            android:paddingVertical="2dp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </FrameLayout>
 
     <!-- Title -->
     <TextView
         android:id="@+id/txtTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Video Title"
         android:textStyle="bold"
         android:textSize="16sp"
-        android:layout_marginTop="6dp" />
+        android:layout_marginTop="8dp"
+        android:maxLines="2"
+        android:ellipsize="end" />
 
-    <!-- Creator -->
+    <!-- Creator and Views Row -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/txtCreator"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Creator name"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/txtViews"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 views"
+            android:textSize="12sp"
+            android:textColor="#666666" />
+    </LinearLayout>
+
+    <!-- Likes count -->
     <TextView
-        android:id="@+id/txtCreator"
+        android:id="@+id/txtLikes"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Creator name"
+        android:text="0 likes"
         android:textSize="12sp"
-        android:textColor="#666666" />
+        android:textColor="#888888"
+        android:layout_marginTop="2dp" />
 
     <!-- Action buttons -->
     <LinearLayout
         android:orientation="horizontal"
         android:layout_marginTop="8dp"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <Button
+        <ImageButton
             android:id="@+id/btnLike"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_like_outline"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Like" />
+
+        <TextView
+            android:id="@+id/txtLikeCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="❤️" />
+            android:layout_gravity="center_vertical"
+            android:text="0"
+            android:textSize="14sp"
+            android:layout_marginEnd="16dp" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btnShare"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Share"
-            android:layout_marginStart="8dp" />
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_menu_share"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Share" />
 
-        <Button
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageButton
             android:id="@+id/btnDownload"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Download"
-            android:layout_marginStart="8dp" />
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/stat_sys_download_done"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Download" />
     </LinearLayout>
 
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:background="#E0E0E0" />
+
 </LinearLayout>
+

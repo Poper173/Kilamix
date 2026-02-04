@@ -1,6 +1,6 @@
 package com.itech.kilamix.model
 
 data class LikeResponse(
-    val status: Boolean,
-    val message: String
+    val liked: Boolean,
+    val likes_count: Int
 )

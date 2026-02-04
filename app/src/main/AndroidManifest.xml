@@ -31,15 +31,42 @@
         <activity
             android:name=".ui.RegisterActivity"
             android:exported="false" />
-        <activity
-            android:name=".ui.VideoPlayerActivity"
-            android:exported="false"
-            android:screenOrientation="sensorLandscape" />
 
         <!-- USER HOME -->
         <activity
             android:name=".ui.HomeActivity"
             android:exported="false" />
+
+        <!-- CREATOR -->
+        <activity
+            android:name=".ui.CreatorActivity"
+            android:exported="false" />
+
+        <!-- UPLOAD VIDEO -->
+        <activity
+            android:name=".ui.UploadVideoActivity"
+            android:exported="false" />
+
+        <!-- EDIT VIDEO -->
+        <activity
+            android:name=".ui.EditVideoActivity"
+            android:exported="false" />
+
+        <!-- EDIT PROFILE -->
+        <activity
+            android:name=".ui.EditProfileActivity"
+            android:exported="false" />
+
+        <!-- ADMIN -->
+        <activity
+            android:name=".ui.AdminActivity"
+            android:exported="false" />
+
+        <!-- VIDEO PLAYER -->
+        <activity
+            android:name=".ui.VideoPlayerActivity"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape" />
 
     </application>
 

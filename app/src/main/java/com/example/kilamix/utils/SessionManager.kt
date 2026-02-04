@@ -1,23 +1,21 @@
 package com.itech.kilamix.utils
 
-
 import android.content.Context
-import android.content.SharedPreferences
 
 class SessionManager(context: Context) {
 
-    private val prefs: SharedPreferences =
-        context.getSharedPreferences("itech_session", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("auth", Context.MODE_PRIVATE)
 
     fun saveAuth(token: String, role: String) {
         prefs.edit()
-            .putString("TOKEN", token)
-            .putString("ROLE", role)
+            .putString("token", token)
+            .putString("role", role)
             .apply()
     }
 
-    fun getToken(): String? = prefs.getString("TOKEN", null)
-    fun getRole(): String? = prefs.getString("ROLE", null)
+    fun getToken(): String? = prefs.getString("token", null)
+
+    fun getRole(): String? = prefs.getString("role", null)
 
     fun logout() {
         prefs.edit().clear().apply()

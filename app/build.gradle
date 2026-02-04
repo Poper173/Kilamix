@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'kotlin-kapt'
+    id 'kotlin-parcelize'
 }
 
 android {
@@ -23,6 +24,10 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
+    }
+
+    buildFeatures {
+        viewBinding true
     }
 }
 
@@ -54,3 +59,4 @@ dependencies {
     // ensure your Android Gradle Plugin is updated.
     // Otherwise, keep these at 1.2.1 to stay on SDK 34.
 }
+
