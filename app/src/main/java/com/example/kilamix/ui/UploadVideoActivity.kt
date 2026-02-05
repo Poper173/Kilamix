@@ -41,7 +41,6 @@ class UploadVideoActivity : AppCompatActivity() {
         binding = ActivityUploadVideoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Get token from SessionManager
         sessionManager = SessionManager(this)
         authToken = "Bearer ${sessionManager.getToken() ?: ""}"
 
@@ -50,7 +49,6 @@ class UploadVideoActivity : AppCompatActivity() {
     }
 
     private fun setupCategorySpinner() {
-        // Simple categories - you can load from API later
         val categories = listOf(
             "Technology" to 1,
             "Gaming" to 2,
@@ -123,41 +121,34 @@ class UploadVideoActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Parse validation errors from backend response
-     * Backend format: {"message":"Validation failed","errors":{"field":["error message"]}}
-     */
     private fun parseValidationErrors(errorBody: String?): String {
         if (errorBody.isNullOrEmpty()) {
             return "Upload failed: Unknown error"
         }
 
         return try {
-            // Try to parse as JSON with errors object
             if (errorBody.contains("\"errors\"")) {
                 val errorsJson = errorBody.substringAfter("\"errors\":")
                     .substringBefore("}}")
                     .trim()
 
-                // Build a readable error message
                 val errorMessages = mutableListOf<String>()
-                
-                // Common field patterns
+
                 val fields = listOf("title", "description", "category_id", "video", "thumbnail")
-                
+
                 for (field in fields) {
                     if (errorsJson.contains("\"$field\"")) {
                         val fieldSection = errorsJson.substringAfter("\"$field\":")
                             .substringBefore("}")
                             .substringBefore(",\"")
-                        
+
                         if (fieldSection.contains("[")) {
                             val messages = fieldSection.substringAfter("[")
                                 .substringBefore("]")
                                 .replace("\"", "")
                                 .split(",")
                                 .filter { it.isNotBlank() }
-                            
+
                             if (messages.isNotEmpty()) {
                                 errorMessages.add("$field: ${messages.joinToString(", ")}")
                             }
@@ -168,7 +159,6 @@ class UploadVideoActivity : AppCompatActivity() {
                 if (errorMessages.isNotEmpty()) {
                     errorMessages.joinToString("\n")
                 } else {
-                    // Try to get the message field
                     val message = errorBody.substringAfter("\"message\":\"")
                         .substringBefore("\"")
                     if (message.isNotEmpty()) {
@@ -178,7 +168,6 @@ class UploadVideoActivity : AppCompatActivity() {
                     }
                 }
             } else {
-                // Try to get the message field
                 val message = errorBody.substringAfter("\"message\":\"")
                     .substringBefore("\"")
                 if (message.isNotEmpty()) {
@@ -225,6 +214,7 @@ class UploadVideoActivity : AppCompatActivity() {
         val description = binding.etDescription.text.toString().trim()
         val categories = listOf(1, 2, 3, 4, 5)
         val categoryId = categories[binding.spinnerCategory.selectedItemPosition]
+        val visibility = "public" // Default visibility
 
         if (title.isEmpty()) {
             Toast.makeText(this, "Please enter video title", Toast.LENGTH_SHORT).show()
@@ -236,7 +226,6 @@ class UploadVideoActivity : AppCompatActivity() {
             return
         }
 
-        // Validate video file
         val (isValid, errorMessage) = validateVideoFile(selectedVideoUri!!)
         if (!isValid) {
             Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
@@ -250,12 +239,14 @@ class UploadVideoActivity : AppCompatActivity() {
 
         val titleBody = title.toRequestBody("text/plain".toMediaTypeOrNull())
         val descBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
-        // Fix: category_id should use correct media type "text/plain" not "plain/text"
         val categoryBody = categoryId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val visibilityBody = visibility.toRequestBody("text/plain".toMediaTypeOrNull())
 
         selectedVideoUri?.let { videoUri ->
-            val videoFile = File(cacheDir, "video_${System.currentTimeMillis()}.mp4")
-            
+            val originalName = getFileName(videoUri)
+            val extension = originalName.substringAfterLast('.', "mp4")
+            val videoFile = File(cacheDir, "video_${System.currentTimeMillis()}.$extension")
+
             try {
                 contentResolver.openInputStream(videoUri)?.use { input ->
                     FileOutputStream(videoFile).use { output ->
@@ -264,10 +255,10 @@ class UploadVideoActivity : AppCompatActivity() {
                 }
 
                 if (videoFile.exists()) {
-                    val requestFile = videoFile.asRequestBody("video/*".toMediaTypeOrNull())
-                    val videoPart = MultipartBody.Part.createFormData("video", videoFile.name, requestFile)
+                    val mimeType = contentResolver.getType(videoUri) ?: "video/mp4"
+                    val requestFile = videoFile.asRequestBody(mimeType.toMediaTypeOrNull())
+                    val videoPart = MultipartBody.Part.createFormData("video", originalName, requestFile)
 
-                    // Handle optional thumbnail
                     val thumbnailPart = selectedThumbnailUri?.let { thumbUri ->
                         val thumbFile = File(cacheDir, "thumb_${System.currentTimeMillis()}.jpg")
                         contentResolver.openInputStream(thumbUri)?.use { input ->
@@ -282,9 +273,9 @@ class UploadVideoActivity : AppCompatActivity() {
                     }
 
                     Log.d(TAG, "Uploading video: ${videoFile.name}, size: ${videoFile.length()} bytes")
-                    Log.d(TAG, "Title: $title, Description: $description, Category ID: $categoryId")
+                    Log.d(TAG, "Title: $title, Description: $description, Category ID: $categoryId, Visibility: $visibility")
 
-                    apiService.uploadVideo(authToken, titleBody, descBody, categoryBody, videoPart, thumbnailPart)
+                    apiService.uploadVideo(authToken, titleBody, descBody, categoryBody, visibilityBody, videoPart, thumbnailPart)
                         .enqueue(object : retrofit2.Callback<com.itech.kilamix.api.ApiResponse<com.itech.kilamix.model.Video>> {
                             override fun onResponse(
                                 call: retrofit2.Call<com.itech.kilamix.api.ApiResponse<com.itech.kilamix.model.Video>>,
@@ -295,14 +286,14 @@ class UploadVideoActivity : AppCompatActivity() {
 
                                 Log.d(TAG, "Upload response code: ${response.code()}")
                                 Log.d(TAG, "Upload response body: ${response.body()}")
-                                
-                                // Log detailed error response for debugging
+                                Log.d(TAG, "Upload error body: ${response.errorBody()?.string()}")
+
                                 if (!response.isSuccessful) {
                                     val errorBody = response.errorBody()?.string()
-                                    Log.e(TAG, "Upload response code: ${response.code()}")
+                                    Log.e(TAG, "Upload failed with code: ${response.code()}")
                                     Log.e(TAG, "Upload error body: $errorBody")
                                     
-                                    // Parse validation errors from backend
+                                    // Parse detailed error message
                                     val errorMessage = parseValidationErrors(errorBody)
                                     Toast.makeText(this@UploadVideoActivity, errorMessage, Toast.LENGTH_LONG).show()
                                     return

@@ -95,7 +95,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="✏️ Edit Profile"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btnLogout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🚪 Logout"
+        android:layout_marginBottom="16dp"
+        android:backgroundTint="@android:color/holo_red_dark"/>
 
     <!-- My Videos Section -->
     <TextView

@@ -5,5 +5,8 @@
     <color name="red">#FF0000</color>
     <color name="purple_500">#631CC8</color>
     <color name="holo_red_dark">#ff0000</color>
+    <color name="holo_green_dark">#009000</color>
+    <color name="holo_purple">#9933CC</color>
+    <color name="holo_blue_dark">#0044CC</color>
     <color name="darker_gray">#666666</color>
 </resources>

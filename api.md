@@ -682,26 +682,292 @@ Response:
 **GET** `/admin/stats`
 - **Auth Required**: Yes (Admin)
 
+Response (200):
+```json
+{
+    "success": true,
+    "data": {
+        "total_users": 150,
+        "total_videos": 500,
+        "total_creators": 25,
+        "total_admins": 3,
+        "active_users": 140,
+        "inactive_users": 10,
+        "pending_videos": 5,
+        "total_views": 1000000
+    }
+}
+```
+
 ### Get Users
 **GET** `/admin/users`
 - **Auth Required**: Yes (Admin)
+
+Response (200):
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john@example.com",
+            "role": "admin",
+            "is_active": true,
+            "avatar": "http://127.0.0.1:8000/storage/avatars/avatar.jpg",
+            "created_at": "2026-01-01T10:00:00Z",
+            "updated_at": "2026-01-15T12:00:00Z"
+        },
+        {
+            "id": 2,
+            "name": "Jane Smith",
+            "email": "jane@example.com",
+            "role": "creator",
+            "is_active": true,
+            "avatar": "http://127.0.0.1:8000/storage/avatars/avatar2.jpg",
+            "created_at": "2026-01-02T10:00:00Z",
+            "updated_at": "2026-01-15T12:00:00Z"
+        },
+        {
+            "id": 3,
+            "name": "Bob Wilson",
+            "email": "bob@example.com",
+            "role": "user",
+            "is_active": false,
+            "avatar": null,
+            "created_at": "2026-01-03T10:00:00Z",
+            "updated_at": "2026-01-15T12:00:00Z"
+        }
+    ]
+}
+```
 
 ### Toggle User Status
 **POST** `/admin/users/{id}/toggle-status`
 - **Auth Required**: Yes (Admin)
 
+Response (200):
+```json
+{
+    "success": true,
+    "message": "User status updated successfully",
+    "data": {
+        "id": 3,
+        "name": "Bob Wilson",
+        "email": "bob@example.com",
+        "role": "user",
+        "is_active": true,
+        "created_at": "2026-01-03T10:00:00Z",
+        "updated_at": "2026-01-15T12:00:00Z"
+    }
+}
+```
+
 ### Update User Role
 **POST** `/admin/users/{id}/role`
 - **Auth Required**: Yes (Admin)
+
+Request body:
+```json
+{
+    "role": "creator"
+}
+```
+
+Response (200):
+```json
+{
+    "success": true,
+    "message": "User role updated successfully",
+    "data": {
+        "id": 3,
+        "name": "Bob Wilson",
+        "email": "bob@example.com",
+        "role": "creator",
+        "is_active": false,
+        "created_at": "2026-01-03T10:00:00Z",
+        "updated_at": "2026-01-15T12:00:00Z"
+    }
+}
+```
+
+### Delete User
+**DELETE** `/admin/users/{id}`
+- **Auth Required**: Yes (Admin)
+
+Response (200):
+```json
+{
+    "success": true,
+    "message": "User deleted successfully"
+}
+```
 
 ### Get Admin Videos
 **GET** `/admin/videos`
 - **Auth Required**: Yes (Admin)
 
+Response (200):
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "title": "My Video",
+            "description": "Video description",
+            "thumbnail_url": "http://127.0.0.1:8000/storage/thumbnails/thumb.jpg",
+            "status": "pending",
+            "user": {
+                "id": 1,
+                "name": "Creator Name",
+                "email": "creator@example.com"
+            },
+            "views_count": 100,
+            "likes_count": 10,
+            "created_at": "2026-01-01T10:00:00Z"
+        }
+    ]
+}
+```
+
 ### Approve/Reject Video
 **POST** `/admin/videos/{id}/approve`
 **POST** `/admin/videos/{id}/reject`
 - **Auth Required**: Yes (Admin)
+
+Response (200):
+```json
+{
+    "success": true,
+    "message": "Video approved successfully"
+}
+```
+
+---
+
+## Android Integration Example
+
+### Retrofit API Service
+```kotlin
+// Admin endpoints interface
+interface AdminApiService {
+
+    @GET("admin/users")
+    fun getAdminUsers(
+        @Header("Authorization") token: String
+    ): Call<ApiResponse<List<AdminUser>>>
+
+    @POST("admin/users/{id}/toggle-status")
+    fun toggleUserStatus(
+        @Header("Authorization") token: String,
+        @Path("id") userId: Int
+    ): Call<ApiResponse<AdminUser>>
+
+    @POST("admin/users/{id}/role")
+    fun updateUserRole(
+        @Header("Authorization") token: String,
+        @Path("id") userId: Int,
+        @Body roleUpdate: RoleUpdateRequest
+    ): Call<ApiResponse<AdminUser>>
+
+    @DELETE("admin/users/{id}")
+    fun deleteUser(
+        @Header("Authorization") token: String,
+        @Path("id") userId: Int
+    ): Call<ApiResponse<Void>>
+
+    @GET("admin/stats")
+    fun getAdminStats(
+        @Header("Authorization") token: String
+    ): Call<ApiResponse<AdminStats>>
+}
+
+// Data classes
+data class AdminUser(
+    val id: Int,
+    val name: String,
+    val email: String,
+    val role: String,
+    val is_active: Boolean = true,
+    val avatar: String? = null,
+    val created_at: String? = null,
+    val updated_at: String? = null
+)
+
+data class RoleUpdateRequest(val role: String)
+
+data class AdminStats(
+    val total_users: Int,
+    val total_videos: Int,
+    val total_creators: Int,
+    val total_admins: Int,
+    val active_users: Int,
+    val inactive_users: Int
+)
+```
+
+### Admin User Adapter (RecyclerView)
+```kotlin
+class UserAdapter(
+    private val onEditRole: (AdminUser) -> Unit,
+    private val onToggleStatus: (AdminUser) -> Unit,
+    private val onDeleteUser: (AdminUser) -> Unit
+) : ListAdapter<AdminUser, UserAdapter.UserViewHolder>(UserDiffCallback()) {
+
+    // ... implementation with DiffUtil for efficient updates
+}
+```
+
+### AdminActivity Implementation
+```kotlin
+class AdminActivity : AppCompatActivity() {
+
+    private lateinit var recyclerUsers: RecyclerView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var sessionManager: SessionManager
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_admin)
+        
+        initViews()
+        setupRecyclerView()
+        setupSwipeRefresh()
+        loadUsers()
+    }
+
+    private fun loadUsers() {
+        val token = sessionManager.getToken() ?: return
+        
+        val apiService = ApiClient.retrofit.create(ApiService::class.java)
+        apiService.getAdminUsers("Bearer $token")
+            .enqueue(object : Callback<ApiResponse<List<AdminUser>>> {
+                // Handle response
+            })
+    }
+
+    private fun showEditRoleDialog(user: AdminUser) {
+        val roles = arrayOf("user", "creator", "admin")
+        val spinner = Spinner(this)
+        // Setup spinner and show dialog
+    }
+
+    private fun updateUserRole(user: AdminUser, newRole: String) {
+        val request = RoleUpdateRequest(newRole)
+        // Call API to update role
+    }
+
+    private fun toggleUserStatus(user: AdminUser) {
+        // Show confirmation, then call API
+    }
+
+    private fun deleteUser(user: AdminUser) {
+        // Show confirmation, then call API
+    }
+}
+```
 
 ---
 

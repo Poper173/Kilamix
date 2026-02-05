@@ -2,6 +2,7 @@ package com.itech.kilamix.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -19,6 +20,10 @@ class CreatorActivity : AppCompatActivity() {
     private lateinit var authToken: String
     private lateinit var sessionManager: SessionManager
     private lateinit var adapter: VideoAdapter
+
+    companion object {
+        private const val TAG = "CreatorActivity"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +45,10 @@ class CreatorActivity : AppCompatActivity() {
 
         binding.btnEditProfile.setOnClickListener {
             Toast.makeText(this, "Edit Profile - Coming Soon", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnLogout.setOnClickListener {
+            logout()
         }
     }
 
@@ -68,44 +77,101 @@ class CreatorActivity : AppCompatActivity() {
                 call: Call<com.itech.kilamix.api.ApiResponse<com.itech.kilamix.model.ChannelResponse>>,
                 response: Response<com.itech.kilamix.api.ApiResponse<com.itech.kilamix.model.ChannelResponse>>
             ) {
-                if (response.isSuccessful && response.body()?.success == true) {
-                    val channel = response.body()?.data
-                    channel?.let {
-                        binding.tvTotalVideos.text = it.videosCount.toString()
-                        binding.tvTotalViews.text = it.totalViews.toString()
+                binding.progressBar.visibility = android.view.View.GONE
+                
+                // Handle both "success" and "message" based responses
+                val channelResponse = response.body()
+                val channel = when {
+                    channelResponse?.data != null -> channelResponse.data
+                    else -> {
+                        // Try to get from error body or use default values
+                        null
                     }
+                }
+                
+                if (response.isSuccessful && channel != null) {
+                    binding.tvTotalVideos.text = channel.videosCount.toString()
+                    binding.tvTotalViews.text = channel.totalViews.toString()
                     loadMyVideos()
                 } else {
-                    binding.progressBar.visibility = android.view.View.GONE
-                    Toast.makeText(this@CreatorActivity, "Failed to load channel info", Toast.LENGTH_SHORT).show()
+                    // Still load videos even if channel fails
+                    loadMyVideos()
                 }
             }
 
             override fun onFailure(call: Call<com.itech.kilamix.api.ApiResponse<com.itech.kilamix.model.ChannelResponse>>, t: Throwable) {
                 binding.progressBar.visibility = android.view.View.GONE
-                Toast.makeText(this@CreatorActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
+                // Try to load videos anyway
+                loadMyVideos()
             }
         })
     }
 
     private fun loadMyVideos() {
+        binding.progressBar.visibility = android.view.View.VISIBLE
+
         val apiService = ApiClient.retrofit.create(com.itech.kilamix.api.ApiService::class.java)
 
-        apiService.getMyVideos(authToken).enqueue(object : Callback<com.itech.kilamix.api.ApiResponse<List<Video>>> {
+        // Use paginated endpoint for better reliability
+        apiService.getMyVideosPaginated(authToken, 1, 20).enqueue(object : Callback<com.itech.kilamix.api.ApiResponse<List<com.itech.kilamix.model.Video>>> {
             override fun onResponse(
-                call: Call<com.itech.kilamix.api.ApiResponse<List<Video>>>,
-                response: Response<com.itech.kilamix.api.ApiResponse<List<Video>>>
+                call: Call<com.itech.kilamix.api.ApiResponse<List<com.itech.kilamix.model.Video>>>,
+                response: Response<com.itech.kilamix.api.ApiResponse<List<com.itech.kilamix.model.Video>>>
             ) {
                 binding.progressBar.visibility = android.view.View.GONE
-                if (response.isSuccessful && response.body()?.success == true) {
-                    val videos = response.body()?.data ?: emptyList()
-                    adapter.updateVideos(videos)
+                
+                Log.d(TAG, "My videos response code: ${response.code()}")
+                Log.d(TAG, "My videos response body: ${response.body()}")
+                
+                if (response.isSuccessful) {
+                    val videoResponse = response.body()
+                    val videos = videoResponse?.data
+                    
+                    if (videos != null && videos.isNotEmpty()) {
+                        adapter.updateVideos(videos)
+                        binding.tvTotalVideos.text = videos.size.toString()
+                    } else {
+                        // Empty or no videos
+                        adapter.updateVideos(emptyList())
+                        Toast.makeText(this@CreatorActivity, "No videos uploaded yet", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    // Try alternative endpoint without pagination
+                    fallbackLoadMyVideos()
+                }
+            }
+
+            override fun onFailure(call: Call<com.itech.kilamix.api.ApiResponse<List<com.itech.kilamix.model.Video>>>, t: Throwable) {
+                binding.progressBar.visibility = android.view.View.GONE
+                Log.e(TAG, "Failed to load videos: ${t.message}")
+                Toast.makeText(this@CreatorActivity, "Error loading videos: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+    
+    private fun fallbackLoadMyVideos() {
+        val apiService = ApiClient.retrofit.create(com.itech.kilamix.api.ApiService::class.java)
+
+        apiService.getMyVideos(authToken).enqueue(object : Callback<com.itech.kilamix.api.ApiResponse<List<com.itech.kilamix.model.Video>>> {
+            override fun onResponse(
+                call: Call<com.itech.kilamix.api.ApiResponse<List<com.itech.kilamix.model.Video>>>,
+                response: Response<com.itech.kilamix.api.ApiResponse<List<com.itech.kilamix.model.Video>>>
+            ) {
+                binding.progressBar.visibility = android.view.View.GONE
+                
+                if (response.isSuccessful) {
+                    val videos = response.body()?.data
+                    if (videos != null) {
+                        adapter.updateVideos(videos)
+                    } else {
+                        adapter.updateVideos(emptyList())
+                    }
                 } else {
                     Toast.makeText(this@CreatorActivity, "Failed to load videos", Toast.LENGTH_SHORT).show()
                 }
             }
 
-            override fun onFailure(call: Call<com.itech.kilamix.api.ApiResponse<List<Video>>>, t: Throwable) {
+            override fun onFailure(call: Call<com.itech.kilamix.api.ApiResponse<List<com.itech.kilamix.model.Video>>>, t: Throwable) {
                 binding.progressBar.visibility = android.view.View.GONE
                 Toast.makeText(this@CreatorActivity, "Error: ${t.message}", Toast.LENGTH_SHORT).show()
             }
@@ -170,6 +236,52 @@ class CreatorActivity : AppCompatActivity() {
 
     private fun viewVideoStats(video: Video) {
         Toast.makeText(this, "Stats for: ${video.title}\nViews: ${video.views_count}\nLikes: ${video.likes_count}", Toast.LENGTH_LONG).show()
+    }
+
+    private fun logout() {
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Logout")
+            .setMessage("Are you sure you want to logout?")
+            .setPositiveButton("Logout") { _, _ ->
+                performLogout()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun performLogout() {
+        val apiService = ApiClient.retrofit.create(com.itech.kilamix.api.ApiService::class.java)
+
+        apiService.logout(authToken).enqueue(object : retrofit2.Callback<com.itech.kilamix.api.ApiResponse<Void>> {
+            override fun onResponse(
+                call: retrofit2.Call<com.itech.kilamix.api.ApiResponse<Void>>,
+                response: retrofit2.Response<com.itech.kilamix.api.ApiResponse<Void>>
+            ) {
+                // Clear session regardless of API response
+                sessionManager.logout()
+
+                Toast.makeText(this@CreatorActivity, "Logged out successfully", Toast.LENGTH_SHORT).show()
+
+                // Navigate to login
+                val intent = Intent(this@CreatorActivity, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
+
+            override fun onFailure(call: retrofit2.Call<com.itech.kilamix.api.ApiResponse<Void>>, t: Throwable) {
+                // Clear session even if API call fails
+                sessionManager.logout()
+
+                Toast.makeText(this@CreatorActivity, "Logged out locally", Toast.LENGTH_SHORT).show()
+
+                // Navigate to login
+                val intent = Intent(this@CreatorActivity, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
+                finish()
+            }
+        })
     }
 }
 
